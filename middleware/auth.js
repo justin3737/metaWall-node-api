@@ -1,4 +1,4 @@
-const User = require("../models/user.model");
+const User = require("../models/users.model");
 const { handleErrorAsync, appError } = require("../service/handleError");
 const { getDecryptedJWT } = require("../service/auth");
 const { errorMsg } = require("../service/enum");
