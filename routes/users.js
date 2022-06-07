@@ -1,7 +1,7 @@
 var express = require("express");
 var router = express.Router();
 const isAuth = require("../middleware/auth");
-const UserController = require("../controllers/users");
+const UserController = require("../controllers/user.controller");
 
 //註冊
 router.post("/sign_up", (req, res, next) =>

@@ -1,7 +1,7 @@
 const handleSuccess = require("../service/handleSuccess");
 const { handleErrorAsync, appError } = require("../service/handleError");
 const validator = require("validator");
-const User = require("../models/users");
+const User = require("../models/user.model");
 const bcrypt = require("bcryptjs/dist/bcrypt");
 const jwt = require("jsonwebtoken");
 
