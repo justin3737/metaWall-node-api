@@ -6,7 +6,7 @@ const uploadCore = require('../service/upload')
 const upload = handleErrorAsync(async (req, res, next) => {
   uploadCore(req, res, async (err) => {
     if (err) {
-      return next(appError(400, err));
+      return next(appError(400, err.message));
     }
     if (!req.files.length) {
       return next(appError(400,"尚未上傳檔案"));
