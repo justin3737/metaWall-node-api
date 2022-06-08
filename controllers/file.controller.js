@@ -1,22 +1,7 @@
-const multer = require("multer");
-const path = require("path");
+const handleSuccess = require("../service/handleSuccess");
 const { ImgurClient } = require('imgur');
 const { appError, handleErrorAsync } = require("../service/handleError");
-
-const multerSettings = {
-  limits: {
-    fileSize: 2 * 1024 * 1024,
-  },
-  fileFilter(req, file, cb) {
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (ext !== '.jpg' && ext !== '.png' && ext !== '.jpeg') {
-      cb('檔案格式錯誤，僅限上傳 jpg、jpeg 與 png 格式。');
-    }
-    cb(null, true);
-  }
-};
-
-const uploadCore = multer(multerSettings).any();
+const uploadCore = require('../service/upload')
 
 const upload = handleErrorAsync(async (req, res, next) => {
   uploadCore(req, res, async (err) => {
@@ -33,10 +18,9 @@ const upload = handleErrorAsync(async (req, res, next) => {
       type: 'base64',
       album: process.env.IMGUR_ALBUM_ID
     });
-    res.status(200).json({
-      status:"success",
+    handleSuccess(res, {
       imgUrl: response.data.link
-    })
+    });
   });
 });
 
