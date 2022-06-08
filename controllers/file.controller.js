@@ -5,7 +5,10 @@ const uploadCore = require('../service/upload')
 
 const upload = handleErrorAsync(async (req, res, next) => {
   uploadCore(req, res, async (err) => {
-    if(!req.files.length) {
+    if (err) {
+      return next(appError(400, err));
+    }
+    if (!req.files.length) {
       return next(appError(400,"尚未上傳檔案"));
     }
     const client = new ImgurClient({
