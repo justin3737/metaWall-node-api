@@ -1,7 +1,6 @@
 {
-  "name": "week4-posts-wall",
+  "name": "week7-image",
   "version": "0.0.0",
-  "homepage": "https://justin3737.github.io//week4-post-wall",
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
