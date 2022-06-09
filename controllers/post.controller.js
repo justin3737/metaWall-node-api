@@ -1,4 +1,4 @@
-const handleSuccess = require("../service/handleSuccess");
+const getHttpResponse = require("../service/successHandler");
 const { handleErrorAsync, appError } = require("../service/handleError");
 
 const User = require("../models/users.model");
@@ -12,7 +12,9 @@ const post = {
       path: "user",
       select: "name photo"
     }).sort(timeSort);
-    handleSuccess(res, allPosts);
+    res.status(200).json(getHttpResponse({
+      data: allPosts
+    }));
   }),
   createdPosts: handleErrorAsync(async (req, res, next) => {
     const { body } = req;
@@ -27,7 +29,9 @@ const post = {
       content: body.content,
       image: body.image
     });
-    handleSuccess(res, newPost);
+    res.status(200).json(getHttpResponse({
+      data: newPost
+    }));
   })
 };
 

@@ -1,9 +1,31 @@
 const User = require("../models/users.model");
 const { handleErrorAsync, appError } = require("../service/handleError");
-const { getDecryptedJWT } = require("../service/auth");
 const { errorMsg } = require("../service/enum");
+const jwt = require("jsonwebtoken");
 
-const auth = handleErrorAsync(async (req, res, next) => {
+/**
+ * 取得 JSON Web Token
+ * @param {object} user 會員資訊
+ * @returns {string}
+ */
+const generateJwtToken = async function (userId = "") {
+  let token = "";
+  if (userId) {
+    token = jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRES
+    });
+  }
+  return token;
+};
+
+/**
+ * 取得解密的 JSON Web Token
+ * @param {string} token JSON Web Token
+ * @returns {string}
+ */
+const getDecryptedJWT = (token) => jwt.verify(token, process.env.JWT_SECRET);
+
+const isAuth = handleErrorAsync(async (req, res, next) => {
   const {
     headers: { authorization = "" },
   } = req;
@@ -25,5 +47,7 @@ const auth = handleErrorAsync(async (req, res, next) => {
   next();
 });
 
-
-module.exports = auth;
+module.exports = {
+  isAuth,
+  generateJwtToken
+};

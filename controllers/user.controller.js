@@ -1,24 +1,9 @@
-const handleSuccess = require("../service/handleSuccess");
-const { handleErrorAsync, appError } = require("../service/handleError");
 const validator = require("validator");
-const User = require("../models/users.model");
 const bcrypt = require("bcryptjs/dist/bcrypt");
-const jwt = require("jsonwebtoken");
-
-const generateSendJWT = (user, statusCode, res) => {
-  // 產生 JWT token
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES,
-  });
-  user.password = undefined;
-  res.status(statusCode).json({
-    status: "success",
-    data: {
-      token,
-      name: user.name
-    }
-  });
-};
+const getHttpResponse = require("../service/successHandler");
+const { handleErrorAsync, appError } = require("../service/handleError");
+const { generateJwtToken } = require("../middleware/auth");
+const User = require("../models/users.model");
 
 const user = {
   // 註冊會員
@@ -54,7 +39,17 @@ const user = {
       password,
       name
     });
-    generateSendJWT(newUser, 201, res);
+    const token = await generateJwtToken(newUser._id);
+    if (token.length === 0) {
+      return next(appError(400, "token 建立失敗"));
+    }
+    const data = {
+      token,
+      "id": newUser._id
+    };
+    res.status(200).json(getHttpResponse({
+      data
+    }));
   }),
   signIn: handleErrorAsync(async (req, res, next) => {
     const {
@@ -73,35 +68,67 @@ const user = {
     if (!isAuth)
       return next(appError(400, "您的密碼不正確"));
 
-    generateSendJWT(user, 200, res);
+    const token = await generateJwtToken(user._id);
+    if (token.length === 0) {
+      return next(appError(400, "token 建立失敗"));
+    }
+    const data = {
+      token,
+      "id": user._id
+    };
+    res.status(200).json(getHttpResponse({
+      data
+    }));
   }),
   updatePassword: handleErrorAsync(async (req, res, next) => {
-    const { password, confirmPassword } = req.body;
+    const {
+      user,
+      body: {
+        oldPassword, password, confirmPassword
+      }
+    } = req;
+
     //內容不可為空
-    if (!password || !confirmPassword)
+    if (!oldPassword || !password || !confirmPassword)
       return next(appError(400, "欄位未正確填寫"));
+
+    const users = await User.findOne({
+      _id: user._id
+    }).select("+password");
+    const compare = await bcrypt.compare(oldPassword, users.password);
+    if (!compare)
+      return next(appError(400, "您的舊密碼不正確!"));
+
+    if (oldPassword === password)
+      return next(appError(400, "新密碼不可與舊密碼相同"));
+
+    if (password !== confirmPassword)
+      return next(appError(400, "密碼不一致"));
 
     if (!validator.isLength(password, {min: 8}))
       return next(appError(400, "密碼數字低於 8 碼"));
 
-    if(password !== confirmPassword)
-      return next(appError(400, "密碼不一致"));
-
+    user.password = null;
     const newPassword = await bcrypt.hash(password, 12);
-    const user = await User.findByIdAndUpdate(req.user.id, {
+    await User.findByIdAndUpdate(req.user.id, {
       password: newPassword
     });
 
-    generateSendJWT(user, 200, res);
+    res.status(200).json(getHttpResponse({
+      message: "更新密碼成功"
+    }));
   }),
-  getProfile: handleErrorAsync(async (req, res, next) => {
-    handleSuccess(res, req.user);
+  getProfile: handleErrorAsync(async (req, res) => {
+    res.status(200).json(getHttpResponse({
+      data: req.user
+    }));
   }),
   updateProfile: handleErrorAsync(async (req, res, next) => {
     const {
       user,
       body: { name, gender },
     } = req;
+
     //需填寫內容
     if (!(name && gender))
       return next(appError(400, "請填寫修改資訊"));
@@ -119,8 +146,10 @@ const user = {
       gender
     });
 
-    Object.assign(currUser, { name, gender });
-    handleSuccess(res, currUser);
+    const userData = Object.assign(currUser, { name, gender });
+    res.status(200).json(getHttpResponse({
+      data: userData
+    }));
   })
 };
 

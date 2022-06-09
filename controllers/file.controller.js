@@ -1,7 +1,7 @@
-const handleSuccess = require("../service/handleSuccess");
-const { ImgurClient } = require('imgur');
+const getHttpResponse = require("../service/successHandler");
+const { ImgurClient } = require("imgur");
 const { appError, handleErrorAsync } = require("../service/handleError");
-const uploadCore = require('../service/upload')
+const uploadCore = require("../service/upload");
 
 const upload = handleErrorAsync(async (req, res, next) => {
   uploadCore(req, res, async (err) => {
@@ -9,7 +9,7 @@ const upload = handleErrorAsync(async (req, res, next) => {
       return next(appError(400, err.message));
     }
     if (!req.files.length) {
-      return next(appError(400,"尚未上傳檔案"));
+      return next(appError(400, "尚未上傳檔案"));
     }
     const client = new ImgurClient({
       clientId: process.env.IMGUR_CLIENT_ID,
@@ -17,13 +17,15 @@ const upload = handleErrorAsync(async (req, res, next) => {
       refreshToken: process.env.IMGUR_REFRESH_TOKEN,
     });
     const response = await client.upload({
-      image: req.files[0].buffer.toString('base64'),
-      type: 'base64',
+      image: req.files[0].buffer.toString("base64"),
+      type: "base64",
       album: process.env.IMGUR_ALBUM_ID
     });
-    handleSuccess(res, {
-      imgUrl: response.data.link
-    });
+    res.status(200).json(getHttpResponse({
+      data: {
+        imgUrl: response.data.link
+      }
+    }));
   });
 });
 
