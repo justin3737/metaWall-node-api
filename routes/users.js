@@ -28,4 +28,12 @@ router.patch("/profile", isAuth, (req, res, next) =>
   UserController.updateProfile(req, res, next)
 );
 
+
+/*
+[POST]追蹤朋友：{url}/users/{userID}/follow
+[DELETE]取消追蹤朋友：{url}/users/{userID}/unfollow
+[GET]取得個人按讚列表：{url}/users/getLikeList
+[GET]取得個人追蹤名單：{url}/users/following
+*/
+
 module.exports = router;

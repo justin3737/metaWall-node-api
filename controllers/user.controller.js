@@ -9,10 +9,10 @@ const user = {
   // 註冊會員
   signUp: handleErrorAsync(async (req, res, next) => {
     let {
-      body: { name, email, password, confirmPassword },
+      body: { nickName, email, password, confirmPassword },
     } = req;
     //內容不可為空
-    if (!name || !email || !password || !confirmPassword)
+    if (!nickName || !email || !password || !confirmPassword)
       return next(appError(400, "欄位未正確填寫"));
 
     //密碼正確
@@ -37,7 +37,7 @@ const user = {
     const newUser = await User.create({
       email,
       password,
-      name
+      nickName
     });
     const token = await generateJwtToken(newUser._id);
     if (token.length === 0) {
@@ -126,15 +126,15 @@ const user = {
   updateProfile: handleErrorAsync(async (req, res, next) => {
     const {
       user,
-      body: { name, gender },
+      body: { nickName, gender },
     } = req;
 
     //需填寫內容
-    if (!(name && gender))
+    if (!(nickName && gender))
       return next(appError(400, "請填寫修改資訊"));
 
     //名字需要2個字以上
-    if (!validator.isLength(name, {min: 2}))
+    if (!validator.isLength(nickName, {min: 2}))
       return next(appError(400, "名字需要2個字以上"));
 
     //正確填寫性別
@@ -142,11 +142,11 @@ const user = {
       return next(appError(400, "請正確填寫性別"));
 
     const currUser = await User.findByIdAndUpdate(user._id, {
-      name,
+      nickName,
       gender
     });
 
-    const userData = Object.assign(currUser, { name, gender });
+    const userData = Object.assign(currUser, { nickName, gender });
     res.status(200).json(getHttpResponse({
       data: userData
     }));

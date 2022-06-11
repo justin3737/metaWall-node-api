@@ -5,16 +5,21 @@ const User = require("../models/users.model");
 const Post = require("../models/posts.model");
 
 const post = {
+  //取得全部貼文
   getPosts: handleErrorAsync(async (req, res, next) => {
     const timeSort = req.query.timeSort === "asc" ? "createAt" :  "-createAt";
     const q = req.query.q !== undefined ? { "content": new RegExp(req.query.q) } : {};
     const allPosts = await Post.find(q).populate({
       path: "user",
-      select: "name photo"
+      select: "nickName avatar"
     }).sort(timeSort);
     res.status(200).json(getHttpResponse({
       data: allPosts
     }));
+  }),
+  //取得單一貼文
+  getPost: handleErrorAsync(async (req, res, next) => {
+
   }),
   createdPosts: handleErrorAsync(async (req, res, next) => {
     const { body } = req;

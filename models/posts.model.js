@@ -3,32 +3,37 @@ const postsSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.ObjectId,
-      ref: "user",
+      ref: "User",
       required: [true, "貼文 ID 未填寫"]
     },
-    image: {
+    content: {
       type: String,
-      default: ""
+      required: [true, "內容未填寫"],
+    },
+    image: {
+      type: [String]
     },
     createAt: {
       type: Date,
       default: Date.now
     },
-    content: {
-      type: String,
-      required: [true, "Content 未填寫"],
+    likes: [{
+      type: mongoose.Schema.ObjectId,
+      ref: "User"
+    }],
+    createAt: {
+      type: Date,
+      default: Date.now
     },
-    likes: {
-      type: Number,
-      default: 0
-    },
-    comments: {
-      type: Number,
-      default: 0
-    },
+    updatedAt: {
+      type: Date,
+      default: Date.now
+    }
   },
   {
-    versionKey: false
+    versionKey: false,
+    toJSON: {virtuals: true},
+    toObject: {virtuals: true}
   }
 );
 
