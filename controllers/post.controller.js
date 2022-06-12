@@ -26,7 +26,25 @@ const post = {
   }),
   //取得單一貼文
   getPost: handleErrorAsync(async (req, res, next) => {
+    const {
+      params : {postID}
+    } = req;
 
+    if (!(postID && mongoose.Types.ObjectId.isValid(postID))) {
+      return next(appError(400, "請傳入特定的貼文"))
+    }
+
+    const existedPost = await Post.findById(postID)
+      .populate({ path: "user", select: "nickName avatar" })
+      .populate({
+        path: "comments",
+        select: "comment user"
+      })
+
+    if (!existedPost) {
+      return next(appError(400, "尚未發布貼文"));
+    }
+    res.status(200).json(getHttpResponse({ data: existedPost }));
   }),
   createdPosts: handleErrorAsync(async (req, res, next) => {
     const {
