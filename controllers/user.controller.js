@@ -4,7 +4,7 @@ const getHttpResponse = require("../service/successHandler");
 const { handleErrorAsync, appError } = require("../service/handleError");
 const { generateJwtToken } = require("../middleware/auth");
 const User = require("../models/users.model");
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const user = {
   // 註冊會員
@@ -202,7 +202,7 @@ const user = {
     res.status(200).json(getHttpResponse({ message: "您已成功追蹤！" }));
   }),
   // 取消追蹤朋友
-  unfllow: handleErrorAsync(async (req, res, next) => {
+  unfollow: handleErrorAsync(async (req, res, next) => {
     const {
       user,
       params: { userID }
