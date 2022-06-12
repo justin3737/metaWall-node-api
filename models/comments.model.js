@@ -33,13 +33,13 @@ const commentsSchema = new mongoose.Schema(
 // 前置器：使用find 尋找 collections 裡面的資料
 commentsSchema.pre(/^find/, function(next){
   this.populate({
-    path: 'user',
-    select: 'id nickName createdAt'
+    path: "user",
+    select: "id nickName createdAt"
   });
   next();
 });
 
 // 建立 Model
-const Comment = mongoose.model('Comment', commentsSchema);
+const Comment = mongoose.model("Comment", commentsSchema);
 
 module.exports = Comment;

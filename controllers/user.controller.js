@@ -126,30 +126,25 @@ const user = {
   updateProfile: handleErrorAsync(async (req, res, next) => {
     const {
       user,
-      body: { nickName, gender },
+      body: {
+        nickName,
+        gender,
+        avatar
+      }
     } = req;
 
-    //需填寫內容
-    if (!(nickName && gender))
-      return next(appError(400, "請填寫修改資訊"));
+    if (!nickName) {
+      return next(appError(400, "更新失敗，請填寫暱稱欄位"));
+    } else if (typeof gender === Number) {
+      return next(appError(400, "更新失敗，請填寫性別欄位"));
+    } else if (!validator.isLength(nickName, { min: 2 })) {
+      return next(appError(400, "暱稱至少 2 個字元以上"));
+    } else if (avatar && !avatar.startsWith("https")) {
+      return next(appError(400, "更新失敗，請確認大頭照的圖片網址"));
+    }
 
-    //名字需要2個字以上
-    if (!validator.isLength(nickName, {min: 2}))
-      return next(appError(400, "名字需要2個字以上"));
-
-    //正確填寫性別
-    if (!["male", "female"].includes(gender))
-      return next(appError(400, "請正確填寫性別"));
-
-    const currUser = await User.findByIdAndUpdate(user._id, {
-      nickName,
-      gender
-    });
-
-    const userData = Object.assign(currUser, { nickName, gender });
-    res.status(200).json(getHttpResponse({
-      data: userData
-    }));
+    await User.findByIdAndUpdate(user._id, { nickName, gender, avatar });
+    res.status(201).json(getHttpResponse({ message: "更新個人資料成功" }));
   })
 };
 
