@@ -9,119 +9,128 @@ const user = {
   // 註冊會員
   signUp: handleErrorAsync(async (req, res, next) => {
     let {
-      body: { nickName, email, password, confirmPassword },
+      body: {
+        email,
+        password,
+        nickName
+      }
     } = req;
-    //內容不可為空
-    if (!nickName || !email || !password || !confirmPassword)
-      return next(appError(400, "欄位未正確填寫"));
+    const emailExist = await User.findOne({ email });
 
-    //密碼正確
-    if (password!==confirmPassword)
-      return next(appError(400, "密碼不一致"));
+    if (!nickName) {
+      return next(appError(400, "註冊失敗，請填寫暱稱欄位", "nickName"))
+    } else if (!validator.isLength(nickName, { min: 2 })) {
+      return next(appError(400, "暱稱至少 2 個字元以上", "nickName"))
+    }
 
-    //密碼 8 碼以上
-    if (!validator.isLength(password, {min: 8}))
-      return next(appError(400, "密碼數字低於 8 碼"));
+    if (!email) {
+      return next(appError(400, "註冊失敗，請填寫 Email 欄位", "email"))
+    } else if (!validator.isEmail(email)) {
+      return next(appError(400, "Email 格式錯誤，請重新填寫 Email 欄位", "email"))
+    } else if (emailExist) {
+      return next(appError(400, "Email 已被註冊，請替換新的 Email", "email"))
+    }
 
-    //是否為 Email
-    if (!validator.isEmail(email))
-      return next(appError(400, "Email 格式不正確"));
+    if (!password) {
+      return next(appError(400, "註冊失敗，請填寫 Password 欄位", "password"))
+    } else if (!validator.isStrongPassword(password,
+      {
+        minLength: 8,
+        minUppercase: 0,
+        minSymbols: 0,
+      })
+    ) {
+      return next(appError(400, "密碼需至少 8 碼以上，並英數混合", "password"))
+    }
 
-    //已被註冊
-    const exist = await User.findOne({ email });
-    if (exist)
-      return next(appError("201", "帳號已被註冊，請替換新的 Email"));
-
-    //加密密碼
-    password = await bcrypt.hash(req.body.password, 12);
+    password = await bcrypt.hash(req.body.password, 12); // 加密密碼
     const newUser = await User.create({
       email,
       password,
       nickName
     });
-    const token = await generateJwtToken(newUser._id);
-    if (token.length === 0) {
-      return next(appError(400, "token 建立失敗"));
-    }
     const data = {
-      token,
-      "id": newUser._id
-    };
-    res.status(200).json(getHttpResponse({
-      data
-    }));
+      token: await generateJwtToken(newUser._id),
+      id: newUser._id
+    }
+    res.status(200).json(getHttpResponse({data}));
   }),
+  // 登入會員
   signIn: handleErrorAsync(async (req, res, next) => {
     const {
       body: { email, password }
     } = req;
-    //確認帳號密碼不為空
-    if (!email || !password)
-      return next(appError(400, "欄位未正確填寫"));
+    if (!email) {
+      return next(appError(400, "登入失敗，請重新填寫 Email 欄位", "email"))
+    } else if (!validator.isEmail(email)) {
+      return next(appError(400, "Email 格式錯誤，請重新填寫 Email 欄位", "email"))
+    }
 
-    //確認有這位使用者
-    const user = await User.findOne({ email }).select("+password");
-    if (!user)
-      return next(appError(400, "您尚未註冊會員"));
-    //帳號或密碼錯誤
-    const isAuth = await bcrypt.compare(password, user.password);
-    if (!isAuth)
-      return next(appError(400, "您的密碼不正確"));
+    if (!password) {
+      return next(appError(400, "登入失敗，請重新填寫 Password 欄位", "password"))
+    } else if (!validator.isStrongPassword(password,
+      {
+        minLength: 8,
+        minUppercase: 0,
+        minSymbols: 0,
+      })
+    ) {
+      return next(appError(400, "密碼需至少 8 碼以上，並英數混合", "password"))
+    }
 
-    const token = await generateJwtToken(user._id);
-    if (token.length === 0) {
-      return next(appError(400, "token 建立失敗"));
+    const user = await User.findOne({ email }).select('+password'); // 顯示密碼
+    if (!user) {
+      return next(appError(400, 'Email 填寫錯誤或尚未註冊', "email"));
+    }
+
+    const auth = await bcrypt.compare(password, user.password); // 比對密碼
+    if (!auth) {
+      return next(appError(400, "登入失敗，密碼不正確", "password"))
     }
     const data = {
-      token,
-      "id": user._id
-    };
-    res.status(200).json(getHttpResponse({
-      data
-    }));
+      token: await generateJwtToken(user._id),
+      id: user._id
+    }
+    res.status(200).json(getHttpResponse({data}));
   }),
+  //更新密碼
   updatePassword: handleErrorAsync(async (req, res, next) => {
     const {
       user,
       body: {
-        oldPassword, password, confirmPassword
+        oldPassword,
+        password,
+        confirmPassword
       }
     } = req;
 
     //內容不可為空
-    if (!oldPassword || !password || !confirmPassword)
+    if (!oldPassword || !password || !confirmPassword) {
       return next(appError(400, "欄位未正確填寫"));
-
+    }
     const users = await User.findOne({
       _id: user._id
     }).select("+password");
     const compare = await bcrypt.compare(oldPassword, users.password);
-    if (!compare)
+    if (!compare) {
       return next(appError(400, "您的舊密碼不正確!"));
-
-    if (oldPassword === password)
+    } else if (oldPassword === password) {
       return next(appError(400, "新密碼不可與舊密碼相同"));
-
-    if (password !== confirmPassword)
+    } else if (password !== confirmPassword) {
       return next(appError(400, "密碼不一致"));
-
-    if (!validator.isLength(password, {min: 8}))
+    } else if (!validator.isLength(password, {min: 8})) {
       return next(appError(400, "密碼數字低於 8 碼"));
+    }
 
     user.password = null;
     const newPassword = await bcrypt.hash(password, 12);
-    await User.findByIdAndUpdate(req.user.id, {
-      password: newPassword
-    });
-
-    res.status(200).json(getHttpResponse({
-      message: "更新密碼成功"
-    }));
+    await User.updateOne({ _id: user._id }, { password: newPassword });
+    res.status(200).json(getHttpResponse({ message: "更新密碼成功" }));
   }),
+  // 取得個人資料
   getProfile: handleErrorAsync(async (req, res) => {
-    res.status(200).json(getHttpResponse({
-      data: req.user
-    }));
+    const { user } = req;
+    res.status(200).json(getHttpResponse(user));
   }),
   updateProfile: handleErrorAsync(async (req, res, next) => {
     const {
