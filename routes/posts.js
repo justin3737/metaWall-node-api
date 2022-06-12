@@ -19,19 +19,14 @@ router.post("/", isAuth, PostsControllers.createdPosts);
 //新增一則貼文的留言：
 router.post("/:postID/comment", isAuth, PostsControllers.createdComments);
 
+// 新增一則貼文的讚
+router.post('/:postID/like', isAuth, PostsControllers.insertLike);
+
+// 取消一則貼文的讚
+router.delete('/:postID/unlike', isAuth, PostsControllers.delLike);
+
 //上傳圖片
 router.post("/image", isAuth, FileControllers.upload);
-
-
-
-/*
-[GET]取得所有貼文：{url}/posts
-[GET]取得單一貼文：{url}/posts/{postID}
-[POST]新增貼文：{url}/posts
-[POST]新增一則貼文的讚：{url}/posts/{postID}/like
-[DELETE]取消一則貼文的讚：{url}/posts/{postID}/unlike
-[GET]取得個人所有貼文列表：{url}/post/user/{userID}
-*/
 
 
 module.exports = router;
