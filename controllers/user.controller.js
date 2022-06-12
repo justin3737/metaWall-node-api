@@ -4,6 +4,7 @@ const getHttpResponse = require("../service/successHandler");
 const { handleErrorAsync, appError } = require("../service/handleError");
 const { generateJwtToken } = require("../middleware/auth");
 const User = require("../models/users.model");
+const Post = require('../models/posts.model');
 const mongoose = require("mongoose");
 
 const user = {
@@ -242,6 +243,29 @@ const user = {
     );
 
     res.status(200).json(getHttpResponse({ message: "您已取消追蹤！" }));
+  }),
+  // 取得按讚列表
+  getLikes: handleErrorAsync(async (req, res, next) => {
+    const {
+      user
+    } = req;
+    const likeList = await Post.find({
+      likes: { $in: [user.id] }
+    }).populate({
+      path: "user",
+      select: "_id nickName"
+    }).select("-comments");
+    res.status(200).json(getHttpResponse({ data: likeList }));
+  }),
+  // 取得追蹤清單
+  getFollows: handleErrorAsync(async (req, res, next) => {
+    const {
+      user
+    } = req;
+    const following = await User.find({ user: user._id })
+      .populate({ path: "followers.user", select: "nickName avatar" })
+      .populate({ path: "fallowing.user", select: "nickName avatar" });
+    res.status(200).json(getHttpResponse({ data: following }));
   })
 };
 

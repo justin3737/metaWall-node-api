@@ -20,10 +20,10 @@ router.post("/", isAuth, PostsControllers.createdPosts);
 router.post("/:postID/comment", isAuth, PostsControllers.createdComments);
 
 // 新增一則貼文的讚
-router.post('/:postID/like', isAuth, PostsControllers.insertLike);
+router.post("/:postID/like", isAuth, PostsControllers.insertLike);
 
 // 取消一則貼文的讚
-router.delete('/:postID/unlike', isAuth, PostsControllers.delLike);
+router.delete("/:postID/unlike", isAuth, PostsControllers.delLike);
 
 //上傳圖片
 router.post("/image", isAuth, FileControllers.upload);
