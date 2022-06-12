@@ -46,6 +46,7 @@ const post = {
     }
     res.status(200).json(getHttpResponse({ data: existedPost }));
   }),
+  //建立單一貼文
   createdPosts: handleErrorAsync(async (req, res, next) => {
     const {
       user,
@@ -73,6 +74,38 @@ const post = {
     });
     res.status(200).json(getHttpResponse({
       data: newPost
+    }));
+  }),
+  //建立留言
+  createdComments: handleErrorAsync(async (req, res, next) => {
+    const {
+      user,
+      params: {
+        postID
+      },
+      body: {
+        comment
+      }
+    } = req;
+
+    if (!(postID && mongoose.Types.ObjectId.isValid(postID))) {
+      return next(appError(400, "請傳入特定的貼文"))
+    }
+
+    const existedPost = await Post.findById(postID);
+    if (!existedPost) {
+      return next(appError(400, "尚未發布貼文"))
+    }
+
+    const newComment = await Comment.create({
+      user: user._id,
+      post: postID,
+      comment
+    })
+
+    const postComment = await Comment.findById(newComment._id);
+    res.status(200).json(getHttpResponse({
+      data: postComment
     }));
   })
 };

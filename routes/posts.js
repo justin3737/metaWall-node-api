@@ -19,9 +19,17 @@ router.post("/", isAuth, (req, res, next) =>
   PostsControllers.createdPosts(req, res, next)
 );
 
+//新增貼文
+router.post("/:postID/comment", isAuth, (req, res, next) =>
+  PostsControllers.createdComments(req, res, next)
+);
+
+//上傳圖片
 router.post("/image", isAuth, (req, res, next) =>
   FileControllers.upload(req, res, next)
 );
+
+
 
 /*
 [GET]取得所有貼文：{url}/posts
