@@ -46,6 +46,38 @@ const post = {
     }
     res.status(200).json(getHttpResponse({ data: existedPost }));
   }),
+  getUserPosts: handleErrorAsync(async (req, res, next) => {
+    const {
+      params: {
+        userID
+      },
+      query: {
+        q,
+        sort = "desc"
+      }
+    } = req;
+
+    if (!(userID && mongoose.Types.ObjectId.isValid(userID))) {
+      return next(appError(400, "請傳入特定的會員"));
+    }
+
+    const existedUser = await User.findById(userID);
+    if (!existedUser) {
+      return next(appError(400, "尚未註冊成為會員"));
+    }
+
+    const filter = { user: userID };
+    if (q) filter.content = new RegExp(q, "i");
+
+    const existedPost = await Post.find(filter)
+      .populate({ path: "user", select: "nickName avatar" })
+      .populate({
+        path: "comments",
+        select: "comment user"
+      }).sort({ createdAt: sort === "desc" ? -1 : 1 });
+
+    res.status(200).json(getHttpResponse({ data: existedPost }));
+  }),
   //建立單一貼文
   createdPosts: handleErrorAsync(async (req, res, next) => {
     const {
