@@ -37,6 +37,12 @@ const postsSchema = new mongoose.Schema(
   }
 );
 
+postsSchema.virtual("comments", { // virtual(虛擬)：掛上 comments
+  ref: "Comment",
+  foreignField: "post",
+  localField: "_id" // 引用：類似 join
+});
+
 const posts = mongoose.model(
   "posts",
   postsSchema
