@@ -5,29 +5,19 @@ const FileControllers = require("../controllers/file.controller");
 const { isAuth } = require("../middleware/auth");
 
 //取得所有貼文
-router.get("/", isAuth, (req, res, next) =>
-  PostsControllers.getPosts(req, res, next)
-);
+router.get("/", isAuth, PostsControllers.getPosts);
 
 //取得單一貼文
-router.get("/:postID", isAuth, (req, res, next) =>
-  PostsControllers.getPost(req, res, next)
-);
+router.get("/:postID", isAuth, PostsControllers.getPost);
 
 //新增貼文
-router.post("/", isAuth, (req, res, next) =>
-  PostsControllers.createdPosts(req, res, next)
-);
+router.post("/", isAuth, PostsControllers.createdPosts);
 
 //新增貼文
-router.post("/:postID/comment", isAuth, (req, res, next) =>
-  PostsControllers.createdComments(req, res, next)
-);
+router.post("/:postID/comment", isAuth, PostsControllers.createdComments);
 
 //上傳圖片
-router.post("/image", isAuth, (req, res, next) =>
-  FileControllers.upload(req, res, next)
-);
+router.post("/image", isAuth, FileControllers.upload);
 
 
 

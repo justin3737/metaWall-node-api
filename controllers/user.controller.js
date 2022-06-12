@@ -4,6 +4,7 @@ const getHttpResponse = require("../service/successHandler");
 const { handleErrorAsync, appError } = require("../service/handleError");
 const { generateJwtToken } = require("../middleware/auth");
 const User = require("../models/users.model");
+const mongoose = require('mongoose');
 
 const user = {
   // 註冊會員
@@ -93,7 +94,7 @@ const user = {
     };
     res.status(200).json(getHttpResponse({ data }));
   }),
-  //更新密碼
+  // 更新密碼
   updatePassword: handleErrorAsync(async (req, res, next) => {
     const {
       user,
@@ -132,6 +133,7 @@ const user = {
     const { user } = req;
     res.status(200).json(getHttpResponse({ data: user }));
   }),
+  // 更新個人資料
   updateProfile: handleErrorAsync(async (req, res, next) => {
     const {
       user,
@@ -154,6 +156,92 @@ const user = {
 
     await User.findByIdAndUpdate(user._id, { nickName, gender, avatar });
     res.status(201).json(getHttpResponse({ message: "更新個人資料成功" }));
+  }),
+  // 追蹤朋友
+  follow: handleErrorAsync(async (req, res, next) => {
+    const {
+      user,
+      params: { userID }
+    } = req;
+
+    if (!(userID && mongoose.Types.ObjectId.isValid(userID))) {
+      return next(appError(400, "請傳入特定的會員ID"));
+    }
+
+    if (user.id === userID) {
+      return next(appError(400, "無法追蹤自己"));
+    }
+
+    const existUser = await User.findById(userID);
+    if (!existUser) {
+      return next(appError(400, "追蹤的會員不存在"));
+    }
+
+    //自己追蹤
+    await User.updateOne(
+      {
+        _id: user.id,
+        "following.user": { $ne: userID }
+      },
+      {
+        $addToSet: { following: { user: userID } }
+      }
+    );
+
+    //對方被追蹤
+    await User.updateOne(
+      {
+        _id: userID,
+        "followers.user": { $ne: user.id }
+      },
+      {
+        $addToSet: { followers: { user: user.id } }
+      }
+    );
+
+    res.status(200).json(getHttpResponse({ message: "您已成功追蹤！" }));
+  }),
+  // 取消追蹤朋友
+  unfllow: handleErrorAsync(async (req, res, next) => {
+    const {
+      user,
+      params: { userID }
+    } = req;
+
+    if (!(userID && mongoose.Types.ObjectId.isValid(userID))) {
+      return next(appError(400, "請傳入特定的會員ID"));
+    }
+
+    if (user.id === userID) {
+      return next(appError(400, "無法取消追蹤自己"));
+    }
+
+    const existUser = await User.findById(userID);
+    if (!existUser) {
+      return next(appError(400, "取消追蹤的會員不存在"));
+    }
+
+    //自己取消追蹤
+    await User.updateOne(
+      {
+        _id: user.id,
+      },
+      {
+        $pull: { following: { user: userID } }
+      }
+    );
+
+    //對方取消追蹤
+    await User.updateOne(
+      {
+        _id: userID
+      },
+      {
+        $pull: { followers: { user: user.id } }
+      }
+    );
+
+    res.status(200).json(getHttpResponse({ message: "您已取消追蹤！" }));
   })
 };
 
